@@ -229,7 +229,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     
 @app.get("/")
 async def home():
-    return {"msg": "FastAPI + MongoDB is running successfully 🚀"}
+     try:
+        collections = await db.list_collection_names()
+        return {"msg": "FastAPI + MongoDB is running 🚀", "collections": collections}
+    except Exception as e:
+        return {"error": str(e)}
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     credentials_exception = HTTPException(
