@@ -38,6 +38,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "cra-template": "1.2.0",
+    "@craco/craco": "^7.1.0",
     "date-fns": "^3.0.0",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
@@ -49,7 +50,7 @@
     "react-hook-form": "^7.56.2",
     "react-resizable-panels": "^3.0.1",
     "react-router-dom": "^7.5.1",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
     "tailwindcss-animate": "^1.0.7",
@@ -57,12 +58,11 @@
     "zod": "^3.24.4"
   },
   "scripts": {
-  "start": "craco start",
-  "build": "craco build",
-  "test": "craco test",
-  "eject": "react-scripts eject"
-}
-,
+    "start": "craco start",
+    "build": "node node_modules/@craco/craco/bin/craco.js build",
+    "test": "craco test",
+    "eject": "react-scripts eject"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -76,7 +76,7 @@
     ]
   },
   "devDependencies": {
-    "@craco/craco": "^7.1.0",
+
     "@eslint/js": "9.23.0",
     "autoprefixer": "^10.4.20",
     "eslint": "9.23.0",
@@ -89,7 +89,7 @@
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "engines": {
-    "node": "20.17.0",
-    "npm": "10.x"
+    "node": ">=20.17.0",
+    "npm": ">=10.x"
   }
 }
