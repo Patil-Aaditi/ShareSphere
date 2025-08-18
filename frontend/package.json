@@ -57,11 +57,12 @@
     "zod": "^3.24.4"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "npx craco build",
-    "test": "npx craco test",
-    "eject": "react-scripts eject"
-  },
+  "start": "craco start",
+  "build": "craco build",
+  "test": "craco test",
+  "eject": "react-scripts eject"
+}
+,
   "browserslist": {
     "production": [
       ">0.2%",
