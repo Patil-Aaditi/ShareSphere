@@ -16,6 +16,7 @@ import uuid
 import shutil
 import logging
 from dotenv import load_dotenv
+from fastapi.responses import FileResponse
 
 # Setup
 ROOT_DIR = Path(__file__).parent
@@ -51,6 +52,8 @@ api_router = APIRouter(prefix="/api")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React frontend
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
+# Serve React static files
+app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 
 
 # Enums
@@ -351,7 +354,7 @@ async def get_user_profile(user_id: str):
     return user_data
 
 # Item endpoints
-@api_router.post("/additem", response_model=Item)
+@api_router.post("/items", response_model=Item)
 async def create_item(
     name: str = Form(...),
     description: str = Form(...),
@@ -410,7 +413,7 @@ async def create_item(
     await db.items.insert_one(item.dict())
     return item
 
-@api_router.get("/additem", response_model=List[Item])
+@api_router.get("/items", response_model=List[Item])
 async def get_items(
     category: Optional[ItemCategory] = None,
     search: Optional[str] = None,
@@ -437,14 +440,14 @@ async def get_items(
     items = await db.items.find(filter_query).skip(skip).limit(limit).to_list(limit)
     return [Item(**item) for item in items]
 
-@api_router.get("/additem/{item_id}", response_model=Item)
+@api_router.get("/items/{item_id}", response_model=Item)
 async def get_item(item_id: str):
     item = await db.items.find_one({"id": item_id})
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return Item(**item)
 
-@api_router.put("/additem/{item_id}", response_model=Item)
+@api_router.put("/items/{item_id}", response_model=Item)
 async def update_item(
     item_id: str,
     item_update: ItemUpdate,
@@ -479,7 +482,7 @@ async def delete_item(
     await db.items.delete_one({"id": item_id})
     return {"message": "Item deleted successfully"}
 
-@api_router.get("/additem/my/listings", response_model=List[Item])
+@api_router.get("/items/my/listings", response_model=List[Item])
 async def get_my_items(current_user: UserProfile = Depends(get_current_user)):
     items = await db.items.find({"owner_id": current_user.id}).to_list(100)
     return [Item(**item) for item in items]
@@ -911,3 +914,9 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    return FileResponse(BUILD_DIR / "index.html")@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    return FileResponse(BUILD_DIR / "index.html")
