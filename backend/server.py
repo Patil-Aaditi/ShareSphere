@@ -55,15 +55,15 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 # Serve React frontend LAST - this catches all remaining routes
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
-# --- Only handle Add Item nested static paths ---
-@app.get("/items/add/static/{folder}/{filename}")
-async def add_item_static_redirect(folder: str, filename: str):
-    """
-    Redirect /items/add/static/js/... or /items/add/static/css/... 
-    to /static/js/... or /static/css/...
-    Only triggers for Add Item page static assets.
-    """
-    return RedirectResponse(url=f"/static/{folder}/{filename}")
+# Redirect only Add Item nested static paths
+@app.get("/items/add/static/{rest_of_path:path}")
+async def add_item_static_redirect(rest_of_path: str):
+    return RedirectResponse(url=f"/static/{rest_of_path}")
+
+# Add Item main page
+@app.get("/items/add", include_in_schema=False)
+async def add_item_main_page():
+    return FileResponse(BUILD_DIR / "index.html")
 
 
 # Enums
