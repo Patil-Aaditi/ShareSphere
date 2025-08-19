@@ -27,17 +27,21 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
+print(f"📁 Upload folder ready at {UPLOAD_DIR}")
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+print("✅ Connected to MongoDB")
 
 # Security
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
+print("🔐 Security setup complete")
 
 app = FastAPI(title="ShareSphere API", version="1.0.0")
+print("🚀 Server starting...")
 api_router = APIRouter(prefix="/api")
 
 # Serve uploaded files
@@ -881,6 +885,7 @@ async def health_check():
 
 # Include router
 app.include_router(api_router)
+print("🛣️ API router included")
 
 # CORS
 app.add_middleware(
@@ -891,6 +896,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+print("🌐 CORS middleware added")
 
 # Logging
 logging.basicConfig(level=logging.INFO)
