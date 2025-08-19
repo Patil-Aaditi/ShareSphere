@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from fastapi.responses import FileResponse
 from fastapi.responses import RedirectResponse
 
+
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -56,75 +57,24 @@ app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="fronte
 # Serve React static files
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 
-FRONTEND_ROUTES = [
-    "",                    # Home
-    "login",
-    "register",
-    "dashboard",
-    "messages",
-    "profile",
-    "settings",
-    "items",               # Items listing page
-    "items/<item_id>",     # Item detail pages handled by React Router
-    # Add other frontend routes as needed
-]
 
-for route in FRONTEND_ROUTES:
-    path = f"/{route}" if route else "/"
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_react_app(full_path: str):
+    print(f"➡ Requested path: {full_path}")  # Debug
 
-    @app.get(path, include_in_schema=False)
-    async def serve_frontend(route=route):
-        return FileResponse(BUILD_DIR / "index.html")
-    
-    # Helper function to serve React index.html with debug
-    async def serve_react_page(route_name: str):
-        print(f"➡ React route requested: {route_name}")  # Debug
-        return FileResponse(BUILD_DIR / "index.html")
+    # Ignore API and uploads
+    if full_path.startswith("api") or full_path.startswith("uploads"):
+        raise HTTPException(status_code=404, detail="Not Found")
 
-# Explicit frontend routes
-    @app.get("/", include_in_schema=False)
-    async def home():
-        return await serve_react_page("/")
+    # Fix React trying to load assets from nested routes like /items/static/...
+    if full_path.startswith("items/static/"):
+        new_path = full_path.replace("items/", "", 1)
+        return RedirectResponse(url=f"/{new_path}")
 
-    @app.get("/login", include_in_schema=False)
-    async def login():
-        return await serve_react_page("/login")
 
-    @app.get("/register", include_in_schema=False)
-    async def register():
-        return await serve_react_page("/register")
+    # Serve React app for all other paths
+    return FileResponse(BUILD_DIR / "index.html")
 
-    @app.get("/dashboard", include_in_schema=False)
-    async def dashboard():
-        return await serve_react_page("/dashboard")
-
-    @app.get("/messages", include_in_schema=False)
-    async def messages():
-        return await serve_react_page("/messages")
-
-    @app.get("/profile", include_in_schema=False)
-    async def profile():
-        return await serve_react_page("/profile")
-
-    @app.get("/settings", include_in_schema=False)
-    async def settings():
-        return await serve_react_page("/settings")
-
-    @app.get("/items", include_in_schema=False)
-    async def items():
-        return await serve_react_page("/items")
-
-# Add Item page
-    @app.get("/items/add", include_in_schema=False)
-    async def add_item_page():
-        print("➡ Add Item page requested: /items/add")  # Debug
-        return await serve_react_page("/items/add")
-
-# Dynamic item detail pages
-    @app.get("/items/{item_id}", include_in_schema=False)
-    async def item_detail(item_id: str):
-        print(f"➡ Item detail requested: /items/{item_id}")  # Debug
-        return await serve_react_page(f"/items/{item_id}")
 
 
 # Enums
