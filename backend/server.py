@@ -16,9 +16,6 @@ import uuid
 import shutil
 import logging
 from dotenv import load_dotenv
-from fastapi.responses import FileResponse
-from fastapi.responses import RedirectResponse
-
 
 # Setup
 ROOT_DIR = Path(__file__).parent
@@ -52,31 +49,10 @@ api_router = APIRouter(prefix="/api")
 
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-# Serve React frontend
-app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
-# Serve React static files
+# Serve React static files FIRST - this is crucial for MIME types
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
-
-
-@app.get("/{full_path:path}", include_in_schema=False)
-async def serve_react_app(full_path: str):
-    print(f"➡ Requested path: {full_path}")  # Debug
-
-    # Ignore API and uploads
-    if full_path.startswith("api") or full_path.startswith("uploads"):
-        raise HTTPException(status_code=404, detail="Not Found")
-
-    # Serve static files correctly
-    if full_path.startswith("static/"):
-        file_path = BUILD_DIR / full_path
-        if file_path.exists():
-            return FileResponse(file_path)
-        else:
-            raise HTTPException(status_code=404, detail="Static file not found")
-
-    # ✅ For all other frontend routes → serve index.html
-    return FileResponse(BUILD_DIR / "index.html")
-
+# Serve React frontend LAST - this catches all remaining routes
+app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
 
 # Enums

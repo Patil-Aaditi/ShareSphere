@@ -167,7 +167,7 @@ const AddItemPage = () => {
         formDataToSend.append('images', image);
       });
 
-      const response = await fetch(`${API_BASE}/additem`, {
+      const response = await fetch(`${API_BASE}/items`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
