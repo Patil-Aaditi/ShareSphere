@@ -17,6 +17,7 @@ import shutil
 import logging
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 
 # Setup
 ROOT_DIR = Path(__file__).parent
@@ -57,11 +58,17 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
-     # ✅ Ignore API and uploads paths (let FastAPI handle them normally)
-    if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("static"):
+    # Fix for React trying to load assets from /items/static/...
+    if full_path.startswith("items/static"):
+        # redirect to correct /static path
+        new_path = full_path.replace("items/", "", 1)
+        return RedirectResponse(url=f"/{new_path}")
+
+    # Ignore API and uploads
+    if full_path.startswith("api") or full_path.startswith("uploads"):
         raise HTTPException(status_code=404, detail="Not Found")
 
-    # ✅ For everything else (like /items/add, /dashboard, /profile etc.)
+    # Serve index.html for React Router routes
     return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
