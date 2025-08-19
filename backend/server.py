@@ -52,10 +52,9 @@ api_router = APIRouter(prefix="/api")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React static files FIRST - this is crucial for MIME types
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
-# Serve React frontend LAST - this catches all remaining routes
-app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
-# Redirect only Add Item nested static paths
+
+# --- Redirect only Add Item nested static paths ---
 @app.get("/items/add/static/{rest_of_path:path}")
 async def add_item_static_redirect(rest_of_path: str):
     """
@@ -63,10 +62,38 @@ async def add_item_static_redirect(rest_of_path: str):
     """
     return RedirectResponse(url=f"/static/{rest_of_path}")
 
-# Add Item main page
+# --- Add Item main page ---
 @app.get("/items/add", include_in_schema=False)
 async def add_item_main_page():
     return FileResponse(BUILD_DIR / "index.html")
+
+# --- Other SPA frontend pages ---
+FRONTEND_ROUTES = [
+    "",  # Home
+    "login",
+    "register",
+    "dashboard",
+    "messages",
+    "profile",
+    "settings",
+    "items",  # Items listing
+    "items/<item_id>",  # Item detail pages
+]
+
+for route in FRONTEND_ROUTES:
+    path = f"/{route}" if route else "/"
+
+    @app.get(path, include_in_schema=False)
+    async def frontend_route(route=route):
+        return FileResponse(BUILD_DIR / "index.html")
+
+# Optional: catch-all for any unmatched frontend route
+@app.get("/{full_path:path}", include_in_schema=False)
+async def catch_all(full_path: str):
+    if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("static"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return FileResponse(BUILD_DIR / "index.html")
+
 
 # Catch-all route for all other frontend pages
 @app.get("/{full_path:path}", include_in_schema=False)
