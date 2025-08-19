@@ -55,9 +55,7 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 # Serve React frontend LAST - this catches all remaining routes
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
-@app.get("/items/static/css/{filename}")
-async def redirect_css(filename: str):
-    return RedirectResponse(url=f"/static/css/{filename}")
+
 
 @app.get("/items/static/js/{filename}")
 async def redirect_js(filename: str):
