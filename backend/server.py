@@ -17,7 +17,7 @@ import shutil
 import logging
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -52,38 +52,22 @@ api_router = APIRouter(prefix="/api")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React static files FIRST - this is crucial for MIME types
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
+app.mount("/items/static", StaticFiles(directory=BUILD_DIR / "static"), name="items_static")
+app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
 
-# --- Redirect Add Item nested static paths ---
-@app.get("/items/add/static/{rest_of_path:path}")
-async def add_item_static_redirect(rest_of_path: str):
-    return RedirectResponse(url=f"/static/{rest_of_path}")
-
-# --- Add Item main page ---
 @app.get("/items/add", include_in_schema=False)
-async def add_item_main_page():
-    return FileResponse(BUILD_DIR / "index.html")
-
-# --- Explicit SPA frontend pages ---
-@app.get("/", include_in_schema=False)
-@app.get("/login", include_in_schema=False)
-@app.get("/register", include_in_schema=False)
-@app.get("/dashboard", include_in_schema=False)
-@app.get("/messages", include_in_schema=False)
-@app.get("/profile", include_in_schema=False)
-@app.get("/settings", include_in_schema=False)
-@app.get("/items", include_in_schema=False)
-@app.get("/items/{item_id}", include_in_schema=False)
-async def frontend_pages(item_id: Optional[str] = None):
-    return FileResponse(BUILD_DIR / "index.html")
-
-# --- Single catch-all route for any other SPA routes ---
-@app.get("/{full_path:path}", include_in_schema=False)
-async def catch_all(full_path: str):
-    if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("static"):
-        raise HTTPException(status_code=404, detail="Not Found")
-    return FileResponse(BUILD_DIR / "index.html")
-
+async def add_item_page():
+    print("➡ Add Item page requested: /items/add")
+    # Read the index.html and modify static paths to be absolute
+    with open(BUILD_DIR / "index.html", "r") as f:
+        html_content = f.read()
+    
+    # Replace relative static paths with absolute ones
+    html_content = html_content.replace('href="/static/', 'href="https://sharesphere-com.onrender.com/static/')
+    html_content = html_content.replace('src="/static/', 'src="https://sharesphere-com.onrender.com/static/')
+    
+    return HTMLResponse(content=html_content)
 
 # Enums
 class TransactionStatus(str, Enum):
