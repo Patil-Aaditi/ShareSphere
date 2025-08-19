@@ -17,6 +17,7 @@ import shutil
 import logging
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -54,6 +55,13 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 # Serve React frontend LAST - this catches all remaining routes
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
+@app.get("/items/static/css/{filename}")
+async def redirect_css(filename: str):
+    return RedirectResponse(url=f"/static/css/{filename}")
+
+@app.get("/items/static/js/{filename}")
+async def redirect_js(filename: str):
+    return RedirectResponse(url=f"/static/js/{filename}")
 @app.get("/items/{path:path}", include_in_schema=False)
 async def items_routes(path: str):
     print(f"➡ Items route requested: /items/{path}")
