@@ -47,9 +47,7 @@ print("🔐 Security setup complete")
 app = FastAPI(title="ShareSphere API", version="1.0.0")
 print("🚀 Server starting...")
 api_router = APIRouter(prefix="/api")
-@app.get("/additem")
-async def serve_additem():
-    return FileResponse(BUILD_DIR / "index.html")
+
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React frontend
@@ -57,6 +55,9 @@ app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="fronte
 # Serve React static files
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
 class TransactionStatus(str, Enum):
