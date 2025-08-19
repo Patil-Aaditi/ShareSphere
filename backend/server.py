@@ -52,7 +52,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React static files FIRST - this is crucial for MIME types
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 # Serve React frontend LAST - this catches all remaining routes
-app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
+app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
 
 # Enums
