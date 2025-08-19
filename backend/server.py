@@ -45,7 +45,7 @@ print("🔐 Security setup complete")
 
 app = FastAPI(title="ShareSphere API", version="1.0.0")
 print("🚀 Server starting...")
-api_router = APIRouter()
+api_router = APIRouter(prefix="/api")
 
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
