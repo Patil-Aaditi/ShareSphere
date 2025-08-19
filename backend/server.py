@@ -54,10 +54,11 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 # Serve React frontend LAST - this catches all remaining routes
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
-@app.get("/items/add", include_in_schema=False)
-async def add_item_page():
-    print("➡ Add Item page requested: /items/add")
+@app.get("/items/{path:path}", include_in_schema=False)
+async def items_routes(path: str):
+    print(f"➡ Items route requested: /items/{path}")
     return FileResponse(BUILD_DIR / "index.html")
+
 # Enums
 class TransactionStatus(str, Enum):
     REQUESTED = "requested"
