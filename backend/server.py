@@ -66,13 +66,15 @@ async def serve_react_app(full_path: str):
     if full_path.startswith("api") or full_path.startswith("uploads"):
         raise HTTPException(status_code=404, detail="Not Found")
 
-    # Fix React trying to load assets from nested routes like /items/static/...
-    if full_path.startswith("items/static/"):
-        new_path = full_path.replace("items/", "", 1)
-        return RedirectResponse(url=f"/{new_path}")
+    # Serve static files correctly
+    if full_path.startswith("static/"):
+        file_path = BUILD_DIR / full_path
+        if file_path.exists():
+            return FileResponse(file_path)
+        else:
+            raise HTTPException(status_code=404, detail="Static file not found")
 
-
-    # Serve React app for all other paths
+    # ✅ For all other frontend routes → serve index.html
     return FileResponse(BUILD_DIR / "index.html")
 
 
