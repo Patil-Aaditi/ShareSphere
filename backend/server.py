@@ -57,6 +57,7 @@ app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="fronte
 
 
 
+# Redirect nested static files for /items/ paths
 @app.get("/items/static/css/{filename}")
 async def redirect_css(filename: str):
     return RedirectResponse(url=f"/static/css/{filename}")
@@ -64,6 +65,23 @@ async def redirect_css(filename: str):
 @app.get("/items/static/js/{filename}")
 async def redirect_js(filename: str):
     return RedirectResponse(url=f"/static/js/{filename}")
+
+# Catch-all route for /items/... pages (React Router)
+@app.get("/items/{path:path}", include_in_schema=False)
+async def items_routes(path: str):
+    print(f"➡ Items route requested: /items/{path}")
+    return FileResponse(BUILD_DIR / "index.html")
+
+# Catch-all route for all other frontend routes
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_react_app(full_path: str):
+    print(f"➡ Requested path: {full_path}")
+    
+    # Do not interfere with API or uploads
+    if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("static"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
 class TransactionStatus(str, Enum):
