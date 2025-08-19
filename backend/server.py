@@ -47,7 +47,9 @@ print("🔐 Security setup complete")
 app = FastAPI(title="ShareSphere API", version="1.0.0")
 print("🚀 Server starting...")
 api_router = APIRouter(prefix="/api")
-
+@app.get("/additem")
+async def serve_additem():
+    return FileResponse(BUILD_DIR / "index.html")
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React frontend
@@ -467,7 +469,7 @@ async def update_item(
     updated_item = await db.items.find_one({"id": item_id})
     return Item(**updated_item)
 
-@api_router.delete("/additem/{item_id}")
+@api_router.delete("/items/{item_id}")
 async def delete_item(
     item_id: str,
     current_user: UserProfile = Depends(get_current_user)
@@ -915,8 +917,4 @@ logger = logging.getLogger(__name__)
 async def shutdown_db_client():
     client.close()
 
-@app.get("/{full_path:path}")
-async def serve_react_app(full_path: str):
-    return FileResponse(BUILD_DIR / "index.html")@app.get("/{full_path:path}")
-async def serve_react_app(full_path: str):
-    return FileResponse(BUILD_DIR / "index.html")
+
