@@ -56,20 +56,26 @@ app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="fronte
 # Serve React static files
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 
-@app.get("/{full_path:path}")
-async def serve_react_app(full_path: str):
-    # Fix for React trying to load assets from /items/static/...
-    if full_path.startswith("items/static"):
-        # redirect to correct /static path
-        new_path = full_path.replace("items/", "", 1)
-        return RedirectResponse(url=f"/{new_path}")
+FRONTEND_ROUTES = [
+    "",                    # Home
+    "login",
+    "register",
+    "dashboard",
+    "messages",
+    "profile",
+    "settings",
+    "items",               # Items listing page
+    "items/<item_id>",     # Item detail pages handled by React Router
+    # Add other frontend routes as needed
+]
 
-    # Ignore API and uploads
-    if full_path.startswith("api") or full_path.startswith("uploads"):
-        raise HTTPException(status_code=404, detail="Not Found")
+for route in FRONTEND_ROUTES:
+    path = f"/{route}" if route else "/"
 
-    # Serve index.html for React Router routes
-    return FileResponse(BUILD_DIR / "index.html")
+    @app.get(path, include_in_schema=False)
+    async def serve_frontend(route=route):
+        return FileResponse(BUILD_DIR / "index.html")
+
 
 # Enums
 class TransactionStatus(str, Enum):
