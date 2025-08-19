@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@apideck/better-ajv-errors": "^0.2.7",
+    "@apideck/better-ajv-errors": "0.2.7",
     "@craco/craco": "^7.1.0",
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-accordion": "^1.2.8",
