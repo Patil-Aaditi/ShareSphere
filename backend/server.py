@@ -55,6 +55,31 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 # Serve React frontend LAST - this catches all remaining routes
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
+# --- Only handle Add Item nested static paths ---
+@app.get("/items/add/static/css/{filename}")
+async def add_item_redirect_css(filename: str):
+    return RedirectResponse(url=f"/static/css/{filename}")
+
+@app.get("/items/add/static/js/{filename}")
+async def add_item_redirect_js(filename: str):
+    return RedirectResponse(url=f"/static/js/{filename}")
+
+# Catch-all route for /items/add page (React Router)
+@app.get("/items/add/{path:path}", include_in_schema=False)
+async def add_item_routes(path: str):
+    print(f"➡ Add Item route requested: /items/add/{path}")
+    return FileResponse(BUILD_DIR / "index.html")
+
+# Catch-all route for all other frontend routes
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_react_app(full_path: str):
+    print(f"➡ Requested path: {full_path}")
+    
+    # Do not interfere with API or uploads
+    if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("static"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
 class TransactionStatus(str, Enum):
