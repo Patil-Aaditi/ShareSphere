@@ -28,6 +28,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 print(f"📁 Upload folder ready at {UPLOAD_DIR}")
+# React build folder
+BUILD_DIR = ROOT_DIR / "frontend" / "build"
+print(f"📦 React build folder set to {BUILD_DIR}")
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -46,6 +49,9 @@ api_router = APIRouter(prefix="/api")
 
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+# Serve React frontend
+app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
+
 
 # Enums
 class TransactionStatus(str, Enum):
