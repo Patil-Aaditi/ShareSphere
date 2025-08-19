@@ -50,7 +50,7 @@ api_router = APIRouter()
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React frontend
-app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
+app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
 
 # Enums
