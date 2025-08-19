@@ -57,6 +57,11 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
+     # ✅ Ignore API and uploads paths (let FastAPI handle them normally)
+    if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("static"):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    # ✅ For everything else (like /items/add, /dashboard, /profile etc.)
     return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
