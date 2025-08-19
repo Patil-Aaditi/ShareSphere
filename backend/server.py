@@ -228,7 +228,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     
 @app.get("/")
 async def home():
-     try:
+    try:
         collections = await db.list_collection_names()
         return {"msg": "FastAPI + MongoDB is running 🚀", "collections": collections}
     except Exception as e:
@@ -886,7 +886,8 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins = ["https://sharesphere-in.onrender.com"],
+
     allow_methods=["*"],
     allow_headers=["*"],
 )
