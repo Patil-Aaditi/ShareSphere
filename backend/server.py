@@ -29,7 +29,7 @@ UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 print(f"📁 Upload folder ready at {UPLOAD_DIR}")
 # React build folder
-BUILD_DIR = ROOT_DIR / "frontend" / "build"
+BUILD_DIR = ROOT_DIR.parent / "frontend" / "build"
 print(f"📦 React build folder set to {BUILD_DIR}")
 
 # MongoDB connection
