@@ -58,11 +58,22 @@ app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="fronte
 # Redirect only Add Item nested static paths
 @app.get("/items/add/static/{rest_of_path:path}")
 async def add_item_static_redirect(rest_of_path: str):
+    """
+    Redirect /items/add/static/... -> /static/...
+    """
     return RedirectResponse(url=f"/static/{rest_of_path}")
 
 # Add Item main page
 @app.get("/items/add", include_in_schema=False)
 async def add_item_main_page():
+    return FileResponse(BUILD_DIR / "index.html")
+
+# Catch-all route for all other frontend pages
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_react_app(full_path: str):
+    # Prevent interference with API or uploads
+    if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("static"):
+        raise HTTPException(status_code=404, detail="Not Found")
     return FileResponse(BUILD_DIR / "index.html")
 
 
