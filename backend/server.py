@@ -886,7 +886,7 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins = ["https://sharesphere-in.onrender.com"],
+    allow_origins = ["https://sharesphere-com.onrender.com"],
 
     allow_methods=["*"],
     allow_headers=["*"],
