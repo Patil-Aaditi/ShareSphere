@@ -16,7 +16,7 @@ import uuid
 import shutil
 import logging
 from dotenv import load_dotenv
-
+from fastapi.responses import FileResponse
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -54,7 +54,10 @@ app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 # Serve React frontend LAST - this catches all remaining routes
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
-
+@app.get("/items/add", include_in_schema=False)
+async def add_item_page():
+    print("➡ Add Item page requested: /items/add")
+    return FileResponse(BUILD_DIR / "index.html")
 # Enums
 class TransactionStatus(str, Enum):
     REQUESTED = "requested"
