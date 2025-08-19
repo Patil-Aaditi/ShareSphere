@@ -75,6 +75,56 @@ for route in FRONTEND_ROUTES:
     @app.get(path, include_in_schema=False)
     async def serve_frontend(route=route):
         return FileResponse(BUILD_DIR / "index.html")
+    
+    # Helper function to serve React index.html with debug
+    async def serve_react_page(route_name: str):
+        print(f"➡ React route requested: {route_name}")  # Debug
+        return FileResponse(BUILD_DIR / "index.html")
+
+# Explicit frontend routes
+    @app.get("/", include_in_schema=False)
+    async def home():
+        return await serve_react_page("/")
+
+    @app.get("/login", include_in_schema=False)
+    async def login():
+        return await serve_react_page("/login")
+
+    @app.get("/register", include_in_schema=False)
+    async def register():
+        return await serve_react_page("/register")
+
+    @app.get("/dashboard", include_in_schema=False)
+    async def dashboard():
+        return await serve_react_page("/dashboard")
+
+    @app.get("/messages", include_in_schema=False)
+    async def messages():
+        return await serve_react_page("/messages")
+
+    @app.get("/profile", include_in_schema=False)
+    async def profile():
+        return await serve_react_page("/profile")
+
+    @app.get("/settings", include_in_schema=False)
+    async def settings():
+        return await serve_react_page("/settings")
+
+    @app.get("/items", include_in_schema=False)
+    async def items():
+        return await serve_react_page("/items")
+
+# Add Item page
+    @app.get("/items/add", include_in_schema=False)
+    async def add_item_page():
+        print("➡ Add Item page requested: /items/add")  # Debug
+        return await serve_react_page("/items/add")
+
+# Dynamic item detail pages
+    @app.get("/items/{item_id}", include_in_schema=False)
+    async def item_detail(item_id: str):
+        print(f"➡ Item detail requested: /items/{item_id}")  # Debug
+        return await serve_react_page(f"/items/{item_id}")
 
 
 # Enums
