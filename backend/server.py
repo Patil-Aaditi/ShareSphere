@@ -57,13 +57,13 @@ app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="fronte
 
 
 
+@app.get("/items/static/css/{filename}")
+async def redirect_css(filename: str):
+    return RedirectResponse(url=f"/static/css/{filename}")
+
 @app.get("/items/static/js/{filename}")
 async def redirect_js(filename: str):
     return RedirectResponse(url=f"/static/js/{filename}")
-@app.get("/items/{path:path}", include_in_schema=False)
-async def items_routes(path: str):
-    print(f"➡ Items route requested: /items/{path}")
-    return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
 class TransactionStatus(str, Enum):
