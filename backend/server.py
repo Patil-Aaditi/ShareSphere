@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from fastapi.responses import FileResponse
 from fastapi.responses import HTMLResponse
 from fastapi.responses import RedirectResponse
+
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -68,14 +69,40 @@ async def serve_items_static_files(file_path: str):
         return FileResponse(static_file)
     raise HTTPException(status_code=404, detail="File not found")
 
-# Serve React app for all frontend routes
-@app.get("/{full_path:path}", include_in_schema=False)
-async def serve_react_app(full_path: str):
-    # Skip API routes
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404)
-    
-    print(f"➡ React route requested: /{full_path}")
+# NOW add all your API route definitions here (all the @api_router.post, @api_router.get etc.)
+# ... (your existing API routes go here) ...
+
+# Include API router AFTER defining all routes
+app.include_router(api_router)
+print("🛣️ API router included")
+
+# THEN add frontend routes
+@app.get("/", include_in_schema=False)
+async def home():
+    return FileResponse(BUILD_DIR / "index.html")
+
+@app.get("/login", include_in_schema=False)
+async def login_page():
+    return FileResponse(BUILD_DIR / "index.html")
+
+@app.get("/register", include_in_schema=False)
+async def register_page():
+    return FileResponse(BUILD_DIR / "index.html")
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard_page():
+    return FileResponse(BUILD_DIR / "index.html")
+
+@app.get("/items", include_in_schema=False)
+async def items_page():
+    return FileResponse(BUILD_DIR / "index.html")
+
+@app.get("/items/add", include_in_schema=False)
+async def add_item_page():
+    return FileResponse(BUILD_DIR / "index.html")
+
+@app.get("/items/{item_id}", include_in_schema=False)
+async def item_detail_page(item_id: str):
     return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
