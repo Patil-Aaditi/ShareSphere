@@ -51,14 +51,32 @@ api_router = APIRouter(prefix="/api")
 
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-# Serve React static files FIRST - this is crucial for MIME types
-app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 
-@app.get("/items/static/{subpath:path}")
-async def serve_items_static(subpath: str):
-    return RedirectResponse(url=f"/static/{subpath}", status_code=301)
+# Custom static file handler for any path
+@app.get("/static/{file_path:path}")
+async def serve_static_files(file_path: str):
+    static_file = BUILD_DIR / "static" / file_path
+    if static_file.exists():
+        return FileResponse(static_file)
+    raise HTTPException(status_code=404, detail="File not found")
 
-app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
+# Handle items static requests by redirecting to main static
+@app.get("/items/static/{file_path:path}")
+async def serve_items_static_files(file_path: str):
+    static_file = BUILD_DIR / "static" / file_path
+    if static_file.exists():
+        return FileResponse(static_file)
+    raise HTTPException(status_code=404, detail="File not found")
+
+# Serve React app for all frontend routes
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_react_app(full_path: str):
+    # Skip API routes
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    
+    print(f"➡ React route requested: /{full_path}")
+    return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
 class TransactionStatus(str, Enum):
