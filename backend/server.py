@@ -54,12 +54,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
-@app.get("/{full_path:path}", include_in_schema=False)
-async def serve_react_app(full_path: str):
-    # Prevent conflicts with API or static/upload endpoints
-    if full_path.startswith(("api", "uploads", "static", "frontend")):
-        raise HTTPException(status_code=404, detail="Not Found")
-    return FileResponse(BUILD_DIR / "index.html")
+
 # Enums
 class TransactionStatus(str, Enum):
     REQUESTED = "requested"
