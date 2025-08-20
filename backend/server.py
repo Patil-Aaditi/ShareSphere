@@ -18,6 +18,7 @@ import logging
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
 from fastapi.responses import HTMLResponse
+from fastapi.responses import RedirectResponse
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -52,22 +53,12 @@ api_router = APIRouter(prefix="/api")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React static files FIRST - this is crucial for MIME types
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
-app.mount("/items/static", StaticFiles(directory=BUILD_DIR / "static"), name="items_static")
+
+@app.get("/items/static/{subpath:path}")
+async def serve_items_static(subpath: str):
+    return RedirectResponse(url=f"/static/{subpath}", status_code=301)
+
 app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
-
-
-@app.get("/items/add", include_in_schema=False)
-async def add_item_page():
-    print("➡ Add Item page requested: /items/add")
-    # Read the index.html and modify static paths to be absolute
-    with open(BUILD_DIR / "index.html", "r") as f:
-        html_content = f.read()
-    
-    # Replace relative static paths with absolute ones
-    html_content = html_content.replace('href="/static/', 'href="https://sharesphere-com.onrender.com/static/')
-    html_content = html_content.replace('src="/static/', 'src="https://sharesphere-com.onrender.com/static/')
-    
-    return HTMLResponse(content=html_content)
 
 # Enums
 class TransactionStatus(str, Enum):
