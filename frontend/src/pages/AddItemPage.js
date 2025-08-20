@@ -31,26 +31,26 @@ const AddItemPage = () => {
   const [errors, setErrors] = useState({});
 
   // Fix for static asset loading on nested routes
-useEffect(() => {
-  const setCorrectBase = () => {
-    let baseElement = document.querySelector('base');
-    if (!baseElement) {
-      baseElement = document.createElement('base');
-      document.head.insertBefore(baseElement, document.head.firstChild);
-    }
-    baseElement.href = '/';
-  };
+  useEffect(() => {
+    const setCorrectBase = () => {
+      let baseElement = document.querySelector('base');
+      if (!baseElement) {
+        baseElement = document.createElement('base');
+        document.head.insertBefore(baseElement, document.head.firstChild);
+      }
+      baseElement.href = '/';
+    };
   
-  setCorrectBase();
+    setCorrectBase();
   
-  // Cleanup on unmount
-  return () => {
-    const baseElement = document.querySelector('base');
-    if (baseElement) {
-      baseElement.remove();
-    }
-  };
-}, []);
+    // Cleanup on unmount
+    return () => {
+      const baseElement = document.querySelector('base');
+      if (baseElement) {
+        baseElement.remove();
+      }
+    };
+  }, []);
   const categories = [
     { value: 'tools', label: 'Tools' },
     { value: 'electronics', label: 'Electronics' },
