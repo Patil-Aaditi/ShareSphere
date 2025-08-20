@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -30,6 +30,27 @@ const AddItemPage = () => {
   });
   const [errors, setErrors] = useState({});
 
+  // Fix for static asset loading on nested routes
+useEffect(() => {
+  const setCorrectBase = () => {
+    let baseElement = document.querySelector('base');
+    if (!baseElement) {
+      baseElement = document.createElement('base');
+      document.head.insertBefore(baseElement, document.head.firstChild);
+    }
+    baseElement.href = '/';
+  };
+  
+  setCorrectBase();
+  
+  // Cleanup on unmount
+  return () => {
+    const baseElement = document.querySelector('base');
+    if (baseElement) {
+      baseElement.remove();
+    }
+  };
+}, []);
   const categories = [
     { value: 'tools', label: 'Tools' },
     { value: 'electronics', label: 'Electronics' },
