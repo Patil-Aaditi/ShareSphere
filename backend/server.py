@@ -18,8 +18,6 @@ import logging
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
 from fastapi.responses import HTMLResponse
-from fastapi.responses import RedirectResponse
-
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -52,52 +50,10 @@ api_router = APIRouter(prefix="/api")
 
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+# Serve React static files FIRST - this is crucial for MIME types
+app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
+app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
-# Redirect static file requests to frontend domain
-@app.get("/static/{file_path:path}")
-async def redirect_to_frontend_static(file_path: str):
-    return RedirectResponse(url=f"https://sharesphere-com.onrender.com/static/{file_path}", status_code=301)
-
-# Handle items static requests by redirecting to frontend domain
-@app.get("/items/static/{file_path:path}")
-async def redirect_items_static_to_frontend(file_path: str):
-    return RedirectResponse(url=f"https://sharesphere-com.onrender.com/static/{file_path}", status_code=301)
-
-# NOW add all your API route definitions here (all the @api_router.post, @api_router.get etc.)
-# ... (your existing API routes go here) ...
-
-# Include API router AFTER defining all routes
-app.include_router(api_router)
-print("🛣️ API router included")
-
-# THEN add frontend routes
-@app.get("/", include_in_schema=False)
-async def home():
-    return FileResponse(BUILD_DIR / "index.html")
-
-@app.get("/login", include_in_schema=False)
-async def login_page():
-    return FileResponse(BUILD_DIR / "index.html")
-
-@app.get("/register", include_in_schema=False)
-async def register_page():
-    return FileResponse(BUILD_DIR / "index.html")
-
-@app.get("/dashboard", include_in_schema=False)
-async def dashboard_page():
-    return FileResponse(BUILD_DIR / "index.html")
-
-@app.get("/items", include_in_schema=False)
-async def items_page():
-    return FileResponse(BUILD_DIR / "index.html")
-
-@app.get("/items/add", include_in_schema=False)
-async def add_item_page():
-    return FileResponse(BUILD_DIR / "index.html")
-
-@app.get("/items/{item_id}", include_in_schema=False)
-async def item_detail_page(item_id: str):
-    return FileResponse(BUILD_DIR / "index.html")
 
 # Enums
 class TransactionStatus(str, Enum):
