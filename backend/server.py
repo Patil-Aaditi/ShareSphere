@@ -53,21 +53,15 @@ api_router = APIRouter(prefix="/api")
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
-# Custom static file handler for any path
+# Redirect static file requests to frontend domain
 @app.get("/static/{file_path:path}")
-async def serve_static_files(file_path: str):
-    static_file = BUILD_DIR / "static" / file_path
-    if static_file.exists():
-        return FileResponse(static_file)
-    raise HTTPException(status_code=404, detail="File not found")
+async def redirect_to_frontend_static(file_path: str):
+    return RedirectResponse(url=f"https://sharesphere-com.onrender.com/static/{file_path}", status_code=301)
 
-# Handle items static requests by redirecting to main static
+# Handle items static requests by redirecting to frontend domain
 @app.get("/items/static/{file_path:path}")
-async def serve_items_static_files(file_path: str):
-    static_file = BUILD_DIR / "static" / file_path
-    if static_file.exists():
-        return FileResponse(static_file)
-    raise HTTPException(status_code=404, detail="File not found")
+async def redirect_items_static_to_frontend(file_path: str):
+    return RedirectResponse(url=f"https://sharesphere-com.onrender.com/static/{file_path}", status_code=301)
 
 # NOW add all your API route definitions here (all the @api_router.post, @api_router.get etc.)
 # ... (your existing API routes go here) ...
