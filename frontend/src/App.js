@@ -299,6 +299,14 @@ function App() {
                   path="/items/:id" 
                   element={<ItemDetailsPage />} 
                 />
+                <Route
+                  path="/items/:id/request"
+                  element={
+                    <ProtectedRoute>
+                      <BorrowRequestPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route 
                   path="/transactions" 
                   element={

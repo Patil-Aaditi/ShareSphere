@@ -81,6 +81,28 @@ const ProfilePage = () => {
     return <div>Loading...</div>;
   }
 
+  const handleDeleteAccount = async () => {
+    if (window.confirm("Are you sure you want to delete your account? This action is irreversible.")) {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE}/users/me`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                // logout() should be called from your AuthContext
+                logout(); 
+                navigate('/');
+            } else {
+                const error = await response.json();
+                toast({ title: "Deletion Failed", description: error.detail, variant: "destructive" });
+            }
+        } catch (error) {
+             toast({ title: "Error", description: "Could not delete account.", variant: "destructive" });
+        }
+    }
+};
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-8">
@@ -274,6 +296,7 @@ const ProfilePage = () => {
                     <Badge variant={user.verified ? "default" : "secondary"}>
                       {user.verified ? 'Verified' : 'Pending'}
                     </Badge>
+                    <Button variant="destructive" onClick={handleDeleteAccount}>Delete Account</Button>
                   </div>
 
                   <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">

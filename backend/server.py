@@ -70,6 +70,10 @@ class ItemCondition(str, Enum):
     GOOD = "good"
     FAIR = "fair"
     POOR = "poor"
+    LIGHT_DAMAGE = "light_damage"
+    MEDIUM_DAMAGE = "medium_damage"
+    HIGH_DAMAGE = "high_damage"
+    SEVERE_DAMAGE = "severe_damage"
 
 class ItemCategory(str, Enum):
     TOOLS = "tools"
@@ -115,6 +119,9 @@ class UserProfile(BaseModel):
     total_lends: int = 0
     total_borrows: int = 0
     successful_transactions: int = 0
+    complaint_count: int = 0 
+
+
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -182,6 +189,7 @@ class Transaction(BaseModel):
     lender_name: str
     status: TransactionStatus
     token_cost: int
+    total_token_cost: int
     pickup_contact: Dict[str, str]
     return_contact: Dict[str, str]
     requested_from: datetime
@@ -219,6 +227,35 @@ class Notification(BaseModel):
     message: str
     data: Optional[Dict[str, Any]] = None
     read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ReviewBase(BaseModel):
+    rating: int = Field(..., gt=0, lt=6) # Rating from 1 to 5
+    comment: str
+    transaction_id: str
+
+class UserReviewCreate(ReviewBase):
+    reviewee_id: str
+
+class ItemReviewCreate(ReviewBase):
+    item_id: str
+
+class Review(ReviewBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    reviewer_id: str
+    reviewer_name: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ComplaintCreate(BaseModel):
+    transaction_id: str
+    defendant_id: str
+    reason: str
+    details: str
+
+class Complaint(ComplaintCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    complainant_id: str
+    status: str = "open"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # Auth utilities
@@ -341,6 +378,24 @@ async def update_profile(
     
     updated_user = await db.users.find_one({"id": current_user.id})
     return UserProfile(**updated_user)
+
+@api_router.delete("/users/me", response_model=Dict[str, str])
+async def delete_own_account(current_user: UserProfile = Depends(get_current_user)):
+    # Prevent deletion if user has active transactions
+    active_transaction = await db.transactions.find_one({
+        "$or": [{"borrower_id": current_user.id}, {"lender_id": current_user.id}],
+        "status": {"$in": ["approved", "active", "returned"]}
+    })
+    if active_transaction:
+        raise HTTPException(status_code=400, detail="Please complete all active transactions before deleting your account.")
+
+    # Delete items listed by the user
+    await db.items.delete_many({"owner_id": current_user.id})
+
+    # Delete the user document
+    await db.users.delete_one({"id": current_user.id})
+
+    return {"message": "Account deleted successfully"}
 
 @api_router.get("/users/{user_id}", response_model=UserProfile)
 async def get_user_profile(user_id: str):
@@ -503,14 +558,22 @@ async def create_transaction(
     if not item["is_available"]:
         raise HTTPException(status_code=400, detail="Item is not available")
     
-    # Check if user has enough tokens
-    if current_user.tokens < item["token_cost"]:
-        raise HTTPException(status_code=400, detail="Insufficient tokens")
-    
     # Get lender details
     lender = await db.users.find_one({"id": item["owner_id"]})
+
+    # --- CORRECTION STARTS HERE ---
+
+    # 1. Perform all calculations before creating the object.
+    duration = transaction.requested_until - transaction.requested_from
     
-    # Create transaction
+    # Calculate the number of days, ensuring any partial day counts as a full day.
+    # We also ensure the rental period is at least 1 day.
+    num_days = max(1, duration.days + (1 if duration.seconds > 0 else 0))
+    
+    daily_cost = item["token_cost"]
+    total_cost = daily_cost * num_days # Simplified and correct calculation
+
+    # 2. Now, create the transaction object with the final calculated values.
     new_transaction = Transaction(
         item_id=transaction.item_id,
         item_name=item["name"],
@@ -519,12 +582,15 @@ async def create_transaction(
         lender_id=item["owner_id"],
         lender_name=lender["name"],
         status=TransactionStatus.REQUESTED,
-        token_cost=item["token_cost"],
+        token_cost=daily_cost,          # The cost per day
+        total_token_cost=total_cost,    # The total cost for the entire period
         pickup_contact=transaction.pickup_contact,
         return_contact=transaction.return_contact,
         requested_from=transaction.requested_from,
         requested_until=transaction.requested_until
     )
+    
+    # --- CORRECTION ENDS HERE ---
     
     await db.transactions.insert_one(new_transaction.dict())
     
@@ -566,7 +632,7 @@ async def update_transaction(
         if transaction_update.status == TransactionStatus.APPROVED:
             update_data["approved_at"] = datetime.utcnow()
             # Deduct tokens from borrower
-            await adjust_tokens_and_stars(transaction["borrower_id"], -transaction["token_cost"], 0)
+            await adjust_tokens_and_stars(transaction["borrower_id"], -transaction["total_token_cost"], 0)
             # Mark item as unavailable
             await db.items.update_one({"id": transaction["item_id"]}, {"$set": {"is_available": False}})
             
@@ -611,28 +677,44 @@ async def update_transaction(
                 update_data["lender_notes"] = transaction_update.lender_notes
             
             # Calculate token/star adjustments based on return condition
-            item_condition = transaction.get("return_condition", ItemCondition.GOOD)
+            item_condition = transaction_update.return_condition or transaction.get("return_condition")
             borrower_token_change = 0
             borrower_star_change = 0
-            lender_token_change = transaction["token_cost"]  # Lender gets the tokens
-            lender_star_change = 1  # Base star for successful transaction
-            
-            if item_condition in [ItemCondition.FAIR, ItemCondition.POOR]:
-                # Damage penalty
-                if item_condition == ItemCondition.FAIR:
-                    damage_penalty = transaction["token_cost"] // 2
-                    borrower_star_change = -1
-                else:  # POOR condition
-                    damage_penalty = transaction["token_cost"]
-                    borrower_star_change = -2
+            lender_token_change = transaction["total_token_cost"] # Lender gets the agreed tokens
+            lender_star_change = 1
+
+            # Late fee calculation
+            if datetime.utcnow() > transaction["requested_until"]:
+                overdue_delta = datetime.utcnow() - transaction["requested_until"]
+                overdue_days = overdue_delta.days + 1 # Add 1 to count the first day of being late
+                daily_cost = transaction["token_cost"]
+                late_fee = (2 * daily_cost) + (overdue_days * daily_cost)
+
+                borrower_token_change -= late_fee
+                lender_token_change += late_fee
+                borrower_star_change = -2 # Penalty for being late
                 
-                borrower_token_change = -damage_penalty
-                lender_token_change += damage_penalty
-                lender_star_change += 1  # Extra star for damage compensation
-            else:
-                # Good return - reward both parties
-                borrower_token_change = 1
-                borrower_star_change = 1
+            # This logic goes inside the COMPLETED status block
+
+            damage_penalty = 0
+            if item_condition:
+                daily_cost = transaction["token_cost"]
+                if item_condition == ItemCondition.LIGHT_DAMAGE:
+                    damage_penalty = daily_cost * 1/4
+                    borrower_star_change = -1
+                elif item_condition == ItemCondition.MEDIUM_DAMAGE:
+                    damage_penalty = daily_cost * 1/3
+                    borrower_star_change = -2
+                elif item_condition == ItemCondition.HIGH_DAMAGE:
+                    damage_penalty = daily_cost * 1/2
+                    borrower_star_change = -3
+                elif item_condition == ItemCondition.SEVERE_DAMAGE:
+                    damage_penalty = daily_cost * 1
+                    borrower_star_change = -5
+
+            if damage_penalty > 0:
+                borrower_token_change -= int(damage_penalty)
+                lender_token_change += int(damage_penalty)
             
             # Apply adjustments
             await adjust_tokens_and_stars(transaction["borrower_id"], borrower_token_change, borrower_star_change)
@@ -706,6 +788,31 @@ async def get_transaction(
     
     return Transaction(**transaction)
 
+@api_router.post("/reviews/user", response_model=Review)
+async def create_user_review(review: UserReviewCreate, current_user: UserProfile = Depends(get_current_user)):
+    # TODO: Add logic to verify transaction is complete and user was involved
+    # Then, create and save the new user review to a 'user_reviews' collection
+    pass
+
+@api_router.get("/users/{user_id}/reviews", response_model=List[Review])
+async def get_user_reviews(user_id: str):
+    # TODO: Add logic to fetch all reviews for the given user_id
+    pass
+
+@api_router.post("/complaints", response_model=Complaint)
+async def create_complaint(complaint: ComplaintCreate, current_user: UserProfile = Depends(get_current_user)):
+    # TODO: Logic to validate the complaint (e.g., check transaction)
+
+    # Halve the defendant's stars and increment their complaint count
+    await db.users.update_one(
+        {"id": complaint.defendant_id},
+        {
+            "$mul": {"stars": 0.5},
+            "$inc": {"complaint_count": 1}
+        }
+    )
+    # TODO: Save the new complaint to a 'complaints' collection
+    pass
 # Message endpoints
 @api_router.post("/messages", response_model=Message)
 async def send_message(
@@ -861,12 +968,10 @@ async def get_community_stats(current_user: UserProfile = Depends(get_current_us
         total_users = await db.users.count_documents({})
         
         # Count users with at least one transaction (active users)
-        active_users = await db.users.count_documents({
-            "$or": [
-                {"total_lends": {"$gt": 0}},
-                {"total_borrows": {"$gt": 0}}
-            ]
-        })
+        active_users = total_users # For now, we consider all registered users as active
+        
+        # If you want to count only users with transactions, uncomment the following line:
+        # active_users = await db.users.count_documents({"successful_transactions": {"$gt": 0}})
         
         # Count total successful transactions
         total_transactions = await db.transactions.count_documents({
@@ -913,5 +1018,3 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
-
-

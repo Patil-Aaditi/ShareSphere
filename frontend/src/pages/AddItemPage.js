@@ -334,8 +334,8 @@ const AddItemPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="value">Item Value (₹) *</Label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
+                       <span className="absolute left-3 top-3 text-muted-foreground">₹</span>
+                       <Input
                         id="value"
                         name="value"
                         type="number"

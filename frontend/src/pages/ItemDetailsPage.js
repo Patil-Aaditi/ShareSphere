@@ -233,9 +233,9 @@ const ItemDetailsPage = () => {
 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center space-x-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="h-4 w-4 text-muted-foreground">₹</span>
                   <span className="text-sm text-muted-foreground">Value:</span>
-                  <span className="font-semibold">₹{item.value.toLocaleString()}</span>
+                  <span className="font-semibold">₹{item.value.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />

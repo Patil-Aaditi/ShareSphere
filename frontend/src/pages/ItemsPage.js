@@ -196,7 +196,7 @@ const ItemsPage = () => {
         </Card>
         <Card>
           <CardContent className="flex items-center p-6">
-            <DollarSign className="h-8 w-8 text-primary mr-4" />
+            <span className="h-8 w-8 text-primary mr-4 text-2xl">₹</span>
             <div>
               <p className="text-2xl font-bold">
                 ₹{items.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
