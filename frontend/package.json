@@ -58,7 +58,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build",
+    "build": "node node_modules/@craco/craco/dist/bin/craco.js build",
     "test": "craco test",
     "eject": "react-scripts eject"
   },
