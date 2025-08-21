@@ -52,6 +52,13 @@ app = FastAPI(title="ShareSphere API", version="1.0.0")
 print("🚀 Server starting...")
 api_router = APIRouter(prefix="/api")
 
+
+# Serve uploaded files
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+# Serve React static files FIRST - this is crucial for MIME types
+app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
+#app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
+app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 # Add this AFTER all API routes and static mounts
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str):
@@ -61,13 +68,6 @@ async def catch_all(full_path: str):
     
     # Serve React index.html for all other routes
     return FileResponse(BUILD_DIR / "index.html")
-
-# Serve uploaded files
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-# Serve React static files FIRST - this is crucial for MIME types
-app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
-#app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
-app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
 # Enums
 class TransactionStatus(str, Enum):
