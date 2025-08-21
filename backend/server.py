@@ -18,6 +18,10 @@ import logging
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
 from fastapi.responses import HTMLResponse
+import logging
+# Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -568,6 +572,8 @@ async def create_transaction(
     
     # Calculate the number of days, ensuring any partial day counts as a full day.
     # We also ensure the rental period is at least 1 day.
+    if duration.days < 0:
+        raise HTTPException(status_code=400, detail="End date must be after start date")
     num_days = max(1, duration.days + (1 if duration.seconds > 0 else 0))
     
     daily_cost = item["token_cost"]
@@ -1011,10 +1017,7 @@ app.add_middleware(
 )
 print("🌐 CORS middleware added")
 
-# Logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    client.close()
+    if client:
+        client.close()
