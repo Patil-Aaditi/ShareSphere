@@ -34,7 +34,9 @@ print(f"📁 Upload folder ready at {UPLOAD_DIR}")
 # React build folder
 BUILD_DIR = ROOT_DIR.parent / "frontend" / "build"
 print(f"📦 React build folder set to {BUILD_DIR}")
-
+print(f"📦 Build directory exists: {BUILD_DIR.exists()}")
+if BUILD_DIR.exists():
+    print(f"📦 Files in build directory: {list(BUILD_DIR.iterdir())}")
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -50,12 +52,22 @@ app = FastAPI(title="ShareSphere API", version="1.0.0")
 print("🚀 Server starting...")
 api_router = APIRouter(prefix="/api")
 
+# Add this AFTER all API routes and static mounts
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    # Don't interfere with API or upload routes
+    if full_path.startswith(("api/", "uploads/", "static/")):
+        raise HTTPException(status_code=404)
+    
+    # Serve React index.html for all other routes
+    return FileResponse(BUILD_DIR / "index.html")
+
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Serve React static files FIRST - this is crucial for MIME types
 app.mount("/static", StaticFiles(directory=BUILD_DIR / "static"), name="static")
-app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
-
+#app.mount("/frontend", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
+app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="frontend")
 
 # Enums
 class TransactionStatus(str, Enum):
@@ -999,6 +1011,8 @@ async def get_community_stats(current_user: UserProfile = Depends(get_current_us
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
+
+
 
 # Include router
 app.include_router(api_router)
