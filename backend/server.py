@@ -28,12 +28,15 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['db']]
 
 print("Connecting to MongoDB...")
-try:
-    client = AsyncIOMotorClient(mongo_url)
-    db = client.get_default_database()
-    print("✅ Connected to MongoDB successfully")
-except Exception as e:
-    print("❌ Failed to connect to MongoDB:", e)
+if not mongo_url or not db:
+    print("❌ mongo_url or db not set in environment variables")
+else:
+    try:
+        client = AsyncIOMotorClient(mongo_url)
+        db = client[db]
+        print("✅ Connected to MongoDB successfully")
+    except Exception as e:
+        print("❌ Failed to connect to MongoDB:", e)
 
 # Create the main app without a prefix
 app = FastAPI()
