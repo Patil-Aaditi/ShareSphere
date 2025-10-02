@@ -29,7 +29,7 @@ db = client[os.environ['DB_NAME']]
 
 print("Connecting to MongoDB...")
 try:
-    client = AsyncIOMotorClient(MONGO_URI)
+    client = AsyncIOMotorClient(MONGO_URL)
     db = client.get_default_database()
     print("✅ Connected to MongoDB successfully")
 except Exception as e:
