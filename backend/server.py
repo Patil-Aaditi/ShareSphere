@@ -27,6 +27,14 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+print("Connecting to MongoDB...")
+try:
+    client = AsyncIOMotorClient(MONGO_URI)
+    db = client.get_default_database()
+    print("✅ Connected to MongoDB successfully")
+except Exception as e:
+    print("❌ Failed to connect to MongoDB:", e)
+
 # Create the main app without a prefix
 app = FastAPI()
 
