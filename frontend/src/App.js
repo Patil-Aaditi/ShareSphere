@@ -14,7 +14,7 @@ const useAuth = () => {
   return context;
 };
 
-const BACKEND_URL = https://sharesphere-in.onrender.com;
+const BACKEND_URL = "https://sharesphere-in.onrender.com";
 const API = `${BACKEND_URL}/api`;
 
 // Configure axios defaults
