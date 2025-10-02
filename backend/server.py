@@ -5,7 +5,6 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
-from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
 import uuid
@@ -14,6 +13,11 @@ from passlib.context import CryptContext
 import jwt
 from enum import Enum
 import shutil
+import cloudinary
+import cloudinary.uploader
+import os
+from pathlib import Path
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -40,9 +44,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Security
 security = HTTPBearer()
 
-# File upload directory
-UPLOAD_DIR = Path("/uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv("CLOUD_NAME"),
+    api_key=os.getenv("CLOUD_API_KEY"),
+    api_secret=os.getenv("CLOUD_API_SECRET")
+)
 
 # Categories
 CATEGORIES = [
@@ -336,11 +343,11 @@ async def login(user_data: UserLogin):
 async def get_me(current_user: User = Depends(get_current_user)):
     return UserProfile(**current_user.dict())
 
-# File Upload Routes
+# File Upload Route (IMPROVED)
 @api_router.post("/upload-images")
 async def upload_images(
-    files: List[UploadFile] = File(...),
-    current_user: User = Depends(get_current_user)
+    files: list[UploadFile] = File(...),
+    current_user: User = Depends(get_current_user)  # IMPROVED: Use correct type
 ):
     if len(files) < 1 or len(files) > 5:
         raise HTTPException(status_code=400, detail="You must upload between 1 and 5 images")
@@ -350,18 +357,16 @@ async def upload_images(
         if not file.content_type.startswith('image/'):
             raise HTTPException(status_code=400, detail="Only image files are allowed")
         
-        # Create unique filename
-        file_extension = file.filename.split('.')[-1]
-        unique_filename = f"{uuid.uuid4()}.{file_extension}"
-        file_path = UPLOAD_DIR / unique_filename
-        
-        # Save file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        uploaded_files.append(f"/uploads/{unique_filename}")
+        # Upload directly to Cloudinary under user-specific folder (IMPROVED)
+        result = cloudinary.uploader.upload(
+            file.file, 
+            folder=f"users/{current_user.id}/uploads/"
+        )
+        file_url = result["secure_url"]  # Public URL
+        uploaded_files.append(file_url)
     
     return {"uploaded_files": uploaded_files}
+
 
 # Item Routes
 @api_router.post("/items", response_model=Item)
@@ -1093,6 +1098,14 @@ async def delete_item(item_id: str, current_user: User = Depends(get_current_use
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
     
+    # Delete images from Cloudinary
+    for url in item.get('images', []):
+        public_id = url.split('/')[-1].split('.')[0]  # Extract public_id
+        try:
+            cloudinary.uploader.destroy(public_id)
+        except Exception as e:
+            logger.error(f"Failed to delete image {url}: {e}")
+    
     return {"message": "Item deleted successfully"}
 
 # Toggle item availability
@@ -1178,9 +1191,6 @@ async def get_suggested_tokens(value: int, category: str):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Serve uploaded files
-from fastapi.staticfiles import StaticFiles
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
