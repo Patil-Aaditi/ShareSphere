@@ -23,13 +23,13 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.environ['mongo_url']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ['db']]
 
 print("Connecting to MongoDB...")
 try:
-    client = AsyncIOMotorClient(MONGO_URL)
+    client = AsyncIOMotorClient(mongo_url)
     db = client.get_default_database()
     print("✅ Connected to MongoDB successfully")
 except Exception as e:
