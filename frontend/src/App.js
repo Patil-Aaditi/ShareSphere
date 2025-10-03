@@ -34,24 +34,22 @@ const AuthProvider = ({ children }) => {
     } else {
       setLoading(false); // No token, stop loading
     }
-  }, [token]);
+  }, []);
 
-   const fetchUserProfile = async () => {
+  const fetchUserProfile = async () => {
     try {
       const response = await axios.get(`${API}/auth/me`);
       setUser(response.data);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-      
-      // Only logout if it's actually an authentication error (401)
-      if (error.response && error.response.status === 401) {
-        logout();
-      } else {
-        // For other errors, keep user logged in but log the issue
-        console.warn('Network or server error, keeping user logged in');
-      }
+    
+      // Clear invalid token and stop loading
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
     } finally {
-      setLoading(false); // Always stop loading after the attempt
+      setLoading(false);
     }
   };
 
