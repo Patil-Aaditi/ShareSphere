@@ -1207,6 +1207,16 @@ async def get_suggested_tokens(value: int, category: str):
     return {"suggested_tokens": suggested}
 
 
+
+@app.api_route("/", methods=["GET", "HEAD"])
+async def root():
+    return {"message": "Backend is live! Use /api/* endpoints."}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Render"""
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -1217,16 +1227,6 @@ app.add_middleware(
 
 # Include the router in the main app
 app.include_router(api_router)
-
-
-@app.get("/")
-async def root():
-    return {"message": "Backend is live! Use /api/* endpoints."}
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for Render"""
-    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # Configure logging
 logging.basicConfig(
