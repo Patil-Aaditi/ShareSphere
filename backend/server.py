@@ -1200,17 +1200,20 @@ async def get_suggested_tokens(value: int, category: str):
     suggested = calculate_token_value(value, category)
     return {"suggested_tokens": suggested}
 
-# Include the router in the main app
-app.include_router(api_router)
-
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include the router in the main app
+app.include_router(api_router)
+@app.get("/")
+async def root():
+    return {"message": "Backend is live! Use /api/* endpoints."}
 
 # Configure logging
 logging.basicConfig(
