@@ -24,7 +24,7 @@ load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
 MONGO_URL = os.environ['MONGO_URL']
-DB_NAME = os.environ['DBNAME']]
+DB_NAME = os.environ['DBNAME']
 
 print("Connecting to MongoDB...")
 if not MONGO_URL or not DB_NAME:
