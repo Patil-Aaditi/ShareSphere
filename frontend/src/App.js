@@ -708,7 +708,7 @@ const BrowseItemsScreen = () => {
               <div className="h-48 bg-gray-200 overflow-hidden">
                 {item.images && item.images.length > 0 ? (
                   <img
-                    src={`${BACKEND_URL}${item.images[0]}`}
+                    src={item.images[0]}
                     alt={item.title}
                     className="w-full h-full object-cover"
                   />
