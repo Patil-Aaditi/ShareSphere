@@ -28,6 +28,9 @@ DB_NAME = os.environ['DB_NAME']
 client=None
 db=None
 
+# Create the main app without a prefix
+app = FastAPI()
+
 @app.on_event("startup")
 async def startup_db_client():
     global client, db
@@ -44,9 +47,6 @@ async def startup_db_client():
     except Exception as e:
         print(f"❌ Failed to connect to MongoDB: {e}")
         db = None
-
-# Create the main app without a prefix
-app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
