@@ -23,20 +23,21 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ['mongo_url']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['db']]
+MONGO_URL = os.environ['MONGO_URL']
+DB_NAME = client[os.environ['DBNAME']]
 
 print("Connecting to MongoDB...")
-if not mongo_url or not db:
-    print("❌ mongo_url or db not set in environment variables")
+if not MONGO_URL or not DB_NAME:
+    print("❌ MONGO_URL or DB_NAME not set in environment variables")
+    db=None
 else:
     try:
-        client = AsyncIOMotorClient(mongo_url)
-        db = client[db]
-        print("✅ Connected to MongoDB successfully")
+        client = AsyncIOMotorClient(MONGO_URL)
+        db = client[DB_NAME]
+        print(f"✅ Connected to MongoDB successfully: database-->{DB_NAME}")
     except Exception as e:
         print("❌ Failed to connect to MongoDB:", e)
+        db=None
 
 # Create the main app without a prefix
 app = FastAPI()
