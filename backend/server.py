@@ -25,19 +25,25 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 MONGO_URL = os.environ['MONGO_URL']
 DB_NAME = os.environ['DB_NAME']
+client=None
+db=None
 
-print("Connecting to MongoDB...")
-if not MONGO_URL or not DB_NAME:
-    print("❌ MONGO_URL or DB_NAME not set in environment variables")
-    db=None
-else:
+@app.on_event("startup")
+async def startup_db_client():
+    global client, db
+    print("Connecting to MongoDB...")
+    if not MONGO_URL or not DB_NAME:
+        print("❌ MONGO_URL or DB_NAME not set in environment variables")
+        return
     try:
-        client = AsyncIOMotorClient(MONGO_URL)
+        client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
         db = client[DB_NAME]
+        # Actually test the connection
+        await client.admin.command('ping')
         print(f"✅ Connected to MongoDB successfully: database-->{DB_NAME}")
     except Exception as e:
-        print("❌ Failed to connect to MongoDB:", e)
-        db=None
+        print(f"❌ Failed to connect to MongoDB: {e}")
+        db = None
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -1211,9 +1217,16 @@ app.add_middleware(
 
 # Include the router in the main app
 app.include_router(api_router)
+
+
 @app.get("/")
 async def root():
     return {"message": "Backend is live! Use /api/* endpoints."}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Render"""
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # Configure logging
 logging.basicConfig(
@@ -1224,4 +1237,7 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    client.close()
+    global client
+    if client:
+        client.close()
+        print("MongoDB connection closed")
