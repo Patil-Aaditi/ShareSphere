@@ -145,7 +145,7 @@ const ItemDetailScreen = () => {
                 <div className="space-y-2">
                   <div className="h-72 bg-gray-200 rounded-lg overflow-hidden">
                     <img
-                      src={`${BACKEND_URL}${item.images[0]}`}
+                      src={item.images[0]}
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
@@ -155,7 +155,7 @@ const ItemDetailScreen = () => {
                       {item.images.slice(1).map((image, index) => (
                         <div key={index} className="h-16 bg-gray-200 rounded overflow-hidden">
                           <img
-                            src={`${BACKEND_URL}${image}`}
+                            src={image}
                             alt={`${item.title} ${index + 2}`}
                             className="w-full h-full object-cover cursor-pointer hover:opacity-75"
                             onClick={() => {
