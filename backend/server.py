@@ -1217,9 +1217,9 @@ async def get_suggested_tokens(value: int, category: str):
 async def root():
     return {"message": "Backend is live! Use /api/* endpoints."}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
-    """Health check endpoint for Render"""
+    """Health check endpoint for Render and UptimeRobot"""
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 app.add_middleware(
